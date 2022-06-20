@@ -1054,10 +1054,7 @@ impl<'a> QueryFilter<'a> {
         out.push_sql(" and ");
 
         // Match by block
-        out.push_sql(child_prefix);
-        out.push_identifier(BLOCK_RANGE_COLUMN)?;
-        out.push_sql(" @> ");
-        out.push_bind_param::<Integer, _>(&self.block)?;
+        BlockRangeColumn::new(&child_table, child_prefix, self.block).contains(&mut out)?;
 
         out.push_sql(" and ");
 
