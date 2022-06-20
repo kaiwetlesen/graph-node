@@ -920,7 +920,7 @@ impl<'a> QueryFilter<'a> {
             Child(child) => {
                 if child_filter_ancestor {
                     return Err(StoreError::QueryExecutionError(
-                        "Only a single level sub filter is allowed".to_string(),
+                        "Child filters can not be nested".to_string(),
                     ));
                 }
 
