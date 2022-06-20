@@ -398,37 +398,30 @@ fn field_list_filter_input_values(
             TypeDefinition::InputObject(_) | TypeDefinition::Union(_) => (None, None),
         };
 
-        if input_field_type.is_none() {
-            let mut input_values: Vec<InputValue> = vec![];
-
-            if let Some(parent) = parent_type_name {
-                extend_with_child_filter_input_value(field, &parent, &mut input_values);
+        let mut input_values: Vec<InputValue> = match input_field_type {
+            None => {
+                vec![]
             }
-
-            return Some(input_values);
-        }
-
-        let input_field_type = input_field_type.unwrap();
-
-        let mut input_values: Vec<InputValue> = vec![
-            "",
-            "not",
-            "contains",
-            "contains_nocase",
-            "not_contains",
-            "not_contains_nocase",
-        ]
-        .into_iter()
-        .map(|filter_type| {
-            input_value(
-                &field.name,
-                filter_type,
-                Type::ListType(Box::new(Type::NonNullType(Box::new(
-                    input_field_type.clone(),
-                )))),
-            )
-        })
-        .collect();
+            Some(input_field_type) => vec![
+                "",
+                "not",
+                "contains",
+                "contains_nocase",
+                "not_contains",
+                "not_contains_nocase",
+            ]
+            .into_iter()
+            .map(|filter_type| {
+                input_value(
+                    &field.name,
+                    filter_type,
+                    Type::ListType(Box::new(Type::NonNullType(Box::new(
+                        input_field_type.clone(),
+                    )))),
+                )
+            })
+            .collect(),
+        };
 
         if let Some(parent) = parent_type_name {
             extend_with_child_filter_input_value(field, &parent, &mut input_values);
