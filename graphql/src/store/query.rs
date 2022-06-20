@@ -2,9 +2,9 @@ use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
 use std::mem::discriminant;
 
 use graph::data::graphql::ext::DirectiveFinder;
+use graph::data::graphql::TypeExt as _;
 use graph::data::value::Object;
 use graph::data::value::Value as DataValue;
-use graph::prelude::s::Type;
 use graph::prelude::*;
 use graph::{components::store::EntityType, data::graphql::ObjectOrInterface};
 
@@ -149,14 +149,6 @@ fn build_fulltext_filter_from_object(
     )
 }
 
-fn resolve_type_name(ty: &Type) -> &String {
-    match ty {
-        Type::ListType(inner) => resolve_type_name(inner),
-        Type::NonNullType(inner) => resolve_type_name(inner),
-        Type::NamedType(name) => name,
-    }
-}
-
 fn parse_change_block_filter(value: &r::Value) -> Result<BlockNumber, QueryExecutionError> {
     match value {
         r::Value::Object(object) => i32::try_from_value(
@@ -265,9 +257,9 @@ fn build_child_filter_from_object(
     let field = entity
         .field(&field_name)
         .ok_or(QueryExecutionError::InvalidFilterError)?;
-    let type_name = resolve_type_name(&field.field_type);
+    let type_name = &field.field_type.get_base_type();
     let child_entity = schema
-        .object_or_interface(type_name.as_str())
+        .object_or_interface(type_name)
         .ok_or(QueryExecutionError::InvalidFilterError)?;
     let filter = build_filter_from_object(child_entity, object, schema)?;
 
