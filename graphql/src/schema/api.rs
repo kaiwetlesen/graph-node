@@ -229,27 +229,22 @@ fn field_filter_input_values(
                 .ok_or_else(|| APISchemaError::TypeNotFound(name.clone()))?;
             Ok(match named_type {
                 TypeDefinition::Object(_) => {
-                    // Only add `where` filter fields for object and interface fields
-                    // if they are not @derivedFrom
-                    if ast::get_derived_from_directive(field).is_some() {
-                        let mut input_values = vec![];
-                        extend_with_child_filter_input_value(field, name, &mut input_values);
-                        input_values
-                    } else {
+                    let mut input_values = match ast::get_derived_from_directive(field) {
+                        // Only add `where` filter fields for object and interface fields
+                        // if they are not @derivedFrom
+                        Some(_) => vec![],
                         // We allow filtering with `where: { other: "some-id" }` and
                         // `where: { others: ["some-id", "other-id"] }`. In both cases,
                         // we allow ID strings as the values to be passed to these
                         // filters.
-                        let mut input_values = field_scalar_filter_input_values(
+                        None => field_scalar_filter_input_values(
                             schema,
                             field,
                             &ScalarType::new(String::from("String")),
-                        );
-
-                        extend_with_child_filter_input_value(field, name, &mut input_values);
-
-                        input_values
-                    }
+                        ),
+                    };
+                    extend_with_child_filter_input_value(field, name, &mut input_values);
+                    input_values
                 }
                 TypeDefinition::Interface(_) => {
                     // Only add `where` filter fields for object and interface fields
