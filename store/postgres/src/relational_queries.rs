@@ -15,8 +15,8 @@ use diesel::Connection;
 use graph::data::value::Word;
 use graph::prelude::{
     anyhow, r, serde_json, Attribute, BlockNumber, ChildMultiplicity, Entity, EntityCollection,
-    EntityFilter, EntityFilterDerivative, EntityKey, EntityLink, EntityOrder, EntityRange,
-    EntityWindow, ParentLink, QueryExecutionError, StoreError, Value, ENV_VARS,
+    EntityFilter, EntityKey, EntityLink, EntityOrder, EntityRange, EntityWindow, ParentLink,
+    QueryExecutionError, StoreError, Value, ENV_VARS,
 };
 use graph::{
     components::store::{AttributeNames, EntityType},
@@ -917,7 +917,7 @@ impl<'a> QueryFilter<'a> {
                     Self::valid_attributes(filter, table, layout, child_filter_ancestor)?;
                 }
             }
-            Child(attr, entity, child_filter, _) => {
+            Child(child) => {
                 if child_filter_ancestor {
                     return Err(StoreError::QueryExecutionError(
                         "Only a single level sub filter is allowed".to_string(),
@@ -925,11 +925,11 @@ impl<'a> QueryFilter<'a> {
                 }
 
                 // Make sure that the attribute name is valid for the given table
-                table.column_for_field(attr)?;
+                table.column_for_field(child.attr.as_str())?;
 
                 Self::valid_attributes(
-                    child_filter,
-                    layout.table_for_entity(entity)?,
+                    &child.filter,
+                    layout.table_for_entity(&child.entity_type)?,
                     layout,
                     true,
                 )?;
@@ -978,7 +978,7 @@ impl<'a> QueryFilter<'a> {
         attribute: &Attribute,
         entity_type: &'a EntityType,
         filter: &'a EntityFilter,
-        derivative: &'a EntityFilterDerivative,
+        derived: bool,
         mut out: AstPass<Pg>,
     ) -> QueryResult<()> {
         let child_table = self
@@ -998,7 +998,7 @@ impl<'a> QueryFilter<'a> {
         out.push_sql(" where ");
 
         // Join tables
-        if derivative.is_derived() {
+        if derived {
             // If the parent is derived,
             // the child column is picked based on the provided attribute
             // and the parent column is the primary key of the parent table
@@ -1431,9 +1431,13 @@ impl<'a> QueryFragment<Pg> for QueryFilter<'a> {
                 self.starts_or_ends_with(attr, value, " not ilike ", false, out)?
             }
             ChangeBlockGte(block_number) => self.filter_block_gte(block_number, out)?,
-            Child(attr, entity_type, child_filter, derivative) => {
-                self.child(attr, entity_type, child_filter, derivative, out)?
-            }
+            Child(child) => self.child(
+                &child.attr,
+                &child.entity_type,
+                &child.filter,
+                child.derived,
+                out,
+            )?,
         }
         Ok(())
     }

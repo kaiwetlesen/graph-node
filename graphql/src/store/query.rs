@@ -271,12 +271,12 @@ fn build_child_filter_from_object(
         .ok_or(QueryExecutionError::InvalidFilterError)?;
     let filter = build_filter_from_object(child_entity, object, schema)?;
 
-    Ok(EntityFilter::Child(
-        field_name,
-        EntityType::new(type_name.to_string()),
-        Box::new(filter),
-        EntityFilterDerivative::new(field.is_derived()),
-    ))
+    Ok(EntityFilter::Child(Child {
+        attr: field_name,
+        entity_type: EntityType::new(type_name.to_string()),
+        filter: Box::new(filter),
+        derived: field.is_derived(),
+    }))
 }
 
 /// Parses a list of GraphQL values into a vector of entity field values.
