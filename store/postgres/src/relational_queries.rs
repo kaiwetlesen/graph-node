@@ -1008,7 +1008,7 @@ impl<'a> QueryFilter<'a> {
             let parent_column = self.table.primary_key();
 
             if child_column.is_list() {
-                // Type A: p.id = any(c.{parent_field})
+                // Type A: c.id = any(i.{parent_field})
                 out.push_sql(parent_prefix);
                 out.push_identifier(parent_column.name.as_str())?;
                 out.push_sql(" = any(");
@@ -1016,7 +1016,7 @@ impl<'a> QueryFilter<'a> {
                 out.push_identifier(child_column.name.as_str())?;
                 out.push_sql(")");
             } else {
-                // Type B: p.id = c.{parent_field}
+                // Type B: c.id = i.{parent_field}
                 out.push_sql(parent_prefix);
                 out.push_identifier(parent_column.name.as_str())?;
                 out.push_sql(" = ");
@@ -1034,7 +1034,7 @@ impl<'a> QueryFilter<'a> {
             let child_column = child_table.primary_key();
 
             if parent_column.is_list() {
-                // Type C: c.id = any(p.child_ids)
+                // Type C: i.id = any(c.child_ids)
                 out.push_sql(child_prefix);
                 out.push_identifier(child_column.name.as_str())?;
                 out.push_sql(" = any(");
@@ -1042,7 +1042,7 @@ impl<'a> QueryFilter<'a> {
                 out.push_identifier(parent_column.name.as_str())?;
                 out.push_sql(")");
             } else {
-                // Type D: c.id = p.child_id
+                // Type D: i.id = c.child_id
                 out.push_sql(child_prefix);
                 out.push_identifier(child_column.name.as_str())?;
                 out.push_sql(" = ");
