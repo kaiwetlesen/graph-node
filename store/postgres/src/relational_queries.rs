@@ -989,9 +989,7 @@ impl<'a> QueryFilter<'a> {
         let child_prefix = "i.";
         let parent_prefix = "c.";
 
-        out.push_sql("exists (select 1");
-
-        out.push_sql(" from ");
+        out.push_sql("exists (select 1 from ");
         out.push_sql(child_table.qualified_name.as_str());
         out.push_sql(" as i");
 
