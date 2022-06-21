@@ -461,6 +461,7 @@ impl ChainSection {
                         url: url.to_string(),
                         features,
                         headers: Default::default(),
+                        limit: usize::MAX,
                     }),
                 };
                 let entry = chains.entry(name.to_string()).or_insert_with(|| Chain {
@@ -563,6 +564,9 @@ pub struct Web3Provider {
         deserialize_with = "deserialize_http_headers"
     )]
     pub headers: HeaderMap,
+
+    #[serde(default)]
+    pub limit: usize,
 }
 
 impl Web3Provider {
@@ -668,6 +672,7 @@ impl<'de> Deserialize<'de> for Provider {
                 let mut transport = None;
                 let mut features = None;
                 let mut headers = None;
+                let mut limit = usize::MAX;
 
                 while let Some(key) = map.next_key()? {
                     match key {
@@ -709,6 +714,9 @@ impl<'de> Deserialize<'de> for Provider {
                             let raw_headers: BTreeMap<String, String> = map.next_value()?;
                             headers = Some(btree_map_to_http_headers(raw_headers));
                         }
+                        ProviderField::Limit => {
+                            limit = map.next_value()?;
+                        }
                     }
                 }
 
@@ -731,6 +739,7 @@ impl<'de> Deserialize<'de> for Provider {
                         features: features
                             .ok_or_else(|| serde::de::Error::missing_field("features"))?,
                         headers: headers.unwrap_or_else(|| HeaderMap::new()),
+                        limit,
                     }),
                 };
 
@@ -761,6 +770,7 @@ enum ProviderField {
     Transport,
     Features,
     Headers,
+    Limit,
 }
 
 #[derive(Copy, Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -1112,6 +1122,7 @@ mod tests {
                     url: "http://localhost:8545".to_owned(),
                     features: BTreeSet::new(),
                     headers: HeaderMap::new(),
+                    limit: usize::MAX,
                 }),
             },
             actual
@@ -1137,6 +1148,7 @@ mod tests {
                     url: "http://localhost:8545".to_owned(),
                     features: BTreeSet::new(),
                     headers: HeaderMap::new(),
+                    limit: usize::MAX,
                 }),
             },
             actual
@@ -1201,6 +1213,7 @@ mod tests {
                     url: "http://localhost:8545".to_owned(),
                     features,
                     headers,
+                    limit: usize::MAX,
                 }),
             },
             actual
@@ -1225,6 +1238,7 @@ mod tests {
                     url: "http://localhost:8545".to_owned(),
                     features: BTreeSet::new(),
                     headers: HeaderMap::new(),
+                    limit: usize::MAX,
                 }),
             },
             actual
